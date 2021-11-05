@@ -14,6 +14,7 @@ TRUTH_TABLE = [
 @cocotb.test()
 async def test_not_truth_table(dut):
     for entry in TRUTH_TABLE:
+        await Timer(time=1)
         dut.A.value = entry.input
 
         await Timer(time=1)

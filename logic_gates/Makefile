@@ -1,5 +1,5 @@
 # Modeled after https://github.com/cocotb/cocotb/blob/master/examples/Makefile
-GATES := nand not
+GATES := nand not and
 
 .PHONY: $(GATES)
 
