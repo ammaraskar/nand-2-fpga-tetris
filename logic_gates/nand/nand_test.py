@@ -10,7 +10,7 @@ async def test_nand_0(dut):
     dut.A.value = 0
     dut.B.value = 0
 
-    await Timer(2, units='ns')
+    await Timer(time=1)
 
     assert dut.Y.value == 1
 
@@ -19,7 +19,7 @@ async def test_nand_1(dut):
     dut.A.value = 0
     dut.B.value = 1
 
-    await Timer(2, units='ns')
+    await Timer(time=1)
 
     assert dut.Y.value == 1
 
@@ -28,7 +28,7 @@ async def test_nand_2(dut):
     dut.A.value = 1
     dut.B.value = 0
 
-    await Timer(2, units='ns')
+    await Timer(time=1)
 
     assert dut.Y.value == 1
 
@@ -37,6 +37,6 @@ async def test_nand_3(dut):
     dut.A.value = 1
     dut.B.value = 1
 
-    await Timer(2, units='ns')
+    await Timer(time=1)
 
     assert dut.Y.value == 0
