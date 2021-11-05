@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Icarus Verilog
+        run: apt install iverilog
+
+      - name: Run tests
+        run: make test
