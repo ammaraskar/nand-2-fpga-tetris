@@ -1,17 +1,12 @@
-module counter(out, clk, reset);
+`timescale 1us/1ns
 
-  parameter WIDTH = 8;
+module dff (
+    output logic q,
+    input logic clk, d
+);
 
-  output [WIDTH-1 : 0] out;
-  input 	       clk, reset;
+always @(posedge clk) begin
+    q <= d;
+end
 
-  reg [WIDTH-1 : 0]   out;
-  wire 	       clk, reset;
-
-  always @(posedge clk or posedge reset)
-    if (reset)
-      out <= 0;
-    else
-      out <= out + 1;
-
-endmodule // counter
+endmodule

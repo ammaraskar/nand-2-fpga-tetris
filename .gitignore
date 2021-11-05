@@ -1,2 +1,5 @@
-# Compiled iverilog file
-my_design
+__pycache__/
+
+# cocotb files
+sim_build/
+results.xml

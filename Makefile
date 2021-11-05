@@ -1,12 +1,7 @@
-ALL: my_design
+TOPLEVEL_LANG = verilog
+VERILOG_SOURCES = counter.v
+TOPLEVEL = dff
+MODULE = counter_test
+SIM = icarus
 
-my_design: counter.v counter_test.sv
-	iverilog -o my_design counter.v counter_test.sv
-
-.PHONY: clean
-clean:
-	rm -f my_design
-
-.PHONY: test
-test: my_design
-	vvp my_design
+include $(shell cocotb-config --makefiles)/Makefile.sim
