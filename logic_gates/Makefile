@@ -1,5 +1,5 @@
 # Modeled after https://github.com/cocotb/cocotb/blob/master/examples/Makefile
-GATES := nand not and or xor mux
+GATES := nand not and or xor mux demux not16
 
 .PHONY: $(GATES)
 
