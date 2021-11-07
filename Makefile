@@ -1,4 +1,4 @@
-CHAPTERS := logic_gates
+CHAPTERS := logic_gates arithmetic
 
 .PHONY: $(CHAPTERS)
 

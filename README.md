@@ -14,7 +14,7 @@ sources. `make test` can be used to always run all the tests.
 
 ## Structure
 
-| # | Chapter       | Folder                         |
-|---|---------------|--------------------------------|
-| 1 | Boolean Logic | [logic_gates/](./logic_gates/) |
-| 2 | ...           | ...                            |
+| # | Chapter            | Folder                         |
+|---|--------------------|--------------------------------|
+| 1 | Boolean Logic      | [logic_gates/](./logic_gates/) |
+| 2 | Boolean Arithmetic | [arithmetic](./arithmetic/)    |
