@@ -14,8 +14,10 @@ sources. `make test` can be used to always run all the tests.
 
 ## Structure
 
-| # | Chapter            | Folder                         |
-|---|--------------------|--------------------------------|
-| 1 | Boolean Logic      | [logic_gates/](./logic_gates/) |
-| 2 | Boolean Arithmetic | [arithmetic/](./arithmetic/)   |
-| 3 | Memory             | [memory/](./memory/)   |
+| # | Chapter               | Folder                           |
+|---|-----------------------|----------------------------------|
+| 1 | Boolean Logic         | [logic_gates/](./logic_gates/)   |
+| 2 | Boolean Arithmetic    | [arithmetic/](./arithmetic/)     |
+| 3 | Memory                | [memory/](./memory/)             |
+| 4 | Machine Language      | (No hardware)                    |
+| 5 | Computer Architecture | [architecture/](./architecture/) |
