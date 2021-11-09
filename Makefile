@@ -1,4 +1,4 @@
-CHAPTERS := logic_gates arithmetic
+CHAPTERS := logic_gates arithmetic memory
 
 .PHONY: $(CHAPTERS)
 
