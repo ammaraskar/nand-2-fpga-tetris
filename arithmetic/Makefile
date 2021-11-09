@@ -1,5 +1,5 @@
 # Modeled after https://github.com/cocotb/cocotb/blob/master/examples/Makefile
-GATES := half_adder full_adder
+GATES := half_adder full_adder alu
 
 .PHONY: $(GATES)
 
