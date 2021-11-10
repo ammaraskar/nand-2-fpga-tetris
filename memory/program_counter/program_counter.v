@@ -9,9 +9,7 @@ module program_counter(output [15:0] out,
     always @(posedge(clk)) begin
         if (reset) begin
             counter <= 0;
-        end
-
-        if (load) begin
+        end else if (load) begin
             counter <= in_value;
         end else if (increment) begin
             counter <= counter + 1;

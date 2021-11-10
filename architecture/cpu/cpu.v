@@ -83,15 +83,8 @@ module cpu(input clk,
             alu_y <= inM;
         end
 
-        // Reset handling.
-        if (reset) begin
-            // Zero out A-register.
-            reg_a_in_value <= 0;
-            reg_a_load <= 1;
-
-            $display("Resetting...");            
         // A-instruction handling.
-        end else if (instruction[15] == 0) begin
+        if (instruction[15] == 0) begin
             // Load A from the immediate value held in the lower 15 bits of
             // the instruction.
             reg_a_load <= 1;
