@@ -20,7 +20,7 @@ module alu(output [15:0] out,
     reg[15:0] and_result;
     reg signed[15:0] sum_result;
 
-    always @* begin
+    always @(x, y, zx, nx, zy, ny, f, no) begin
         if (zx) begin
             x_actual = 0;
         end else begin

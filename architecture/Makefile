@@ -1,5 +1,5 @@
 # Modeled after https://github.com/cocotb/cocotb/blob/master/examples/Makefile
-GATES := ram16k program_counter register
+GATES := cpu
 
 .PHONY: $(GATES)
 

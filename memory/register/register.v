@@ -4,9 +4,9 @@ module register(output [15:0] out,
                 input wire load);
     reg [15:0] data;
 
-    always @(posedge(clk)) begin
+    always @(negedge(clk)) begin
         if (load) begin
-            data = in_value;
+            data <= in_value;
         end
     end
 

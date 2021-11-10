@@ -91,3 +91,36 @@ async def test_addition(dut):
         await Timer(time=1)
         assert dut.out.value == sum
         assert dut.zr.value == int(sum == 0)
+
+
+@cocotb.test()
+async def test_identity_y(dut):
+    a = 0
+    b = random.randint(0, 0xFFFF)
+
+    dut.x.value = a
+    dut.y.value = b
+    dut.zx.value = 1
+    dut.nx.value = 1
+    dut.zy.value = 0
+    dut.ny.value = 0
+    dut.f.value = 0
+    dut.no.value = 0
+
+    await Timer(time=1)
+    assert dut.out.value == b
+
+
+@cocotb.test()
+async def test_weird_cpu_case(dut):
+    dut.x.value = 0
+    dut.y.value = 12345
+    dut.zx.value = 1
+    dut.nx.value = 1
+    dut.zy.value = 0
+    dut.ny.value = 0
+    dut.f.value = 0
+    dut.no.value = 0
+
+    await Timer(time=1)
+    assert dut.out.value == 12345

@@ -1,4 +1,4 @@
-CHAPTERS := logic_gates arithmetic memory
+CHAPTERS := logic_gates arithmetic memory architecture
 
 .PHONY: $(CHAPTERS)
 
