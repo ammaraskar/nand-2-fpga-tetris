@@ -70,6 +70,10 @@ module cpu(input clk,
     // conditional as per below.
     assign pc_in = reg_a_value;
 
+    // Register-A input is either taken as an immediate from the instruction
+    // or the output of the ALU.
+    assign reg_a_in_value = instruction[15] ? alu_output : instruction[14:0];
+
     always @(posedge(clk)) begin
         // Set PC to increment by default.
         pc_load <= 0;
@@ -81,17 +85,6 @@ module cpu(input clk,
             alu_y <= reg_a_value;
         end else begin
             alu_y <= inM;
-        end
-
-        // A-instruction handling.
-        if (instruction[15] == 0) begin
-            // Load A from the immediate value held in the lower 15 bits of
-            // the instruction.
-            reg_a_in_value <= instruction[14:0];
-        // C-instruction handling.
-        end else begin
-            // Route input to A from the ALU for C-instructions.
-            reg_a_in_value <= alu_output;
         end
 
         // Check whether we are going jump or not.

@@ -12,10 +12,8 @@ module ram16k(output [15:0] out,
     always @(posedge(clk)) begin
         if (load) begin
             reg_array[address] <= in_value;
-        end else begin
-            data_out <= reg_array[address];
         end
     end
 
-    assign out = data_out;
+    assign out = reg_array[address];
 endmodule
