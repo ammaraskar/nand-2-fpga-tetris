@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 `include "../../memory/register/register.v"
 `include "../../memory/program_counter/program_counter.v"
 `include "../../arithmetic/alu/alu.v"
@@ -59,18 +60,17 @@ module cpu(input clk,
 
     // Memory address is always given by A register value.
     assign addressM = reg_a_value;
-    // writeM is decided based on the lines in the posedge.
-    reg writeM_out;
-    assign writeM = writeM_out;
+
+    // Handle the load register bits.
+    assign reg_a_load = !instruction[15] || (instruction[15] && instruction[5]);
+    assign reg_d_load = instruction[15] && instruction[4];
+    assign writeM = instruction[15] && instruction[3];
 
     // Input to PC value is always from register A, but loading it in is
     // conditional as per below.
     assign pc_in = reg_a_value;
 
     always @(posedge(clk)) begin
-        $display("--- %d ---", pc_value);
-        $display("Register values: A=%d, D=%d", reg_a_value, reg_d_value);
-
         // Set PC to increment by default.
         pc_load <= 0;
         pc_increment <= 1;
@@ -87,24 +87,11 @@ module cpu(input clk,
         if (instruction[15] == 0) begin
             // Load A from the immediate value held in the lower 15 bits of
             // the instruction.
-            reg_a_load <= 1;
             reg_a_in_value <= instruction[14:0];
-
-            reg_d_load <= 0;
-            writeM_out <= 0;
-            $display("I am loading immediate %d into A", instruction[14:0]);
         // C-instruction handling.
         end else begin
-            // Route destination bits from the instruction to appropriate load bits.
-            reg_a_load <= instruction[5];
-            reg_d_load <= instruction[4];
-            writeM_out <= instruction[3];
-
             // Route input to A from the ALU for C-instructions.
             reg_a_in_value <= alu_output;
-
-            $display("ALU control bits: zx=%b nx=%b zy=%b ny=%b f=%b no=%b", zx_alu, nx_alu, zy_alu, ny_alu, f_alu, no_alu);
-            $display("ALU inputs: x=%d and y=%d, output=%d", alu_x, alu_y, alu_output);
         end
 
         // Check whether we are going jump or not.
@@ -126,16 +113,5 @@ module cpu(input clk,
             // Unconditional jump.
             3'b111: pc_load <= (1) && instruction[15];
         endcase
-    end
-
-    always @(negedge(clk)) begin
-        if (pc_load) begin
-            $display("Jump taken with jump type: %d!", instruction[2:0]);
-        end
-        //if (instruction[15] == 1) begin
-        //end
-        $display("negedge ALU inputs: x=%d and y=%d, output=%d", alu_x, alu_y, alu_output);
-        $display("Register in    : A=%d, D=%d", reg_a_in_value, reg_d_in_value);
-        $display("Loading A=%b, D=%b, M=%b", reg_a_load, reg_d_load, writeM_out);
     end
 endmodule

@@ -6,7 +6,7 @@ module program_counter(output [15:0] out,
                        input wire increment);
     reg [15:0] counter;
 
-    always @(posedge(clk)) begin
+    always @(negedge(clk)) begin
         if (reset) begin
             counter <= 0;
         end else if (load) begin

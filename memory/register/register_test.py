@@ -50,7 +50,6 @@ async def test_random_values(dut):
     random_values = [random.randint(0, 0xFFFF) for _ in range(512)]
 
     for i, data in enumerate(random_values):
-        print("Trying iteration", i, "with data", data)
         dut.in_value.value = data
         dut.load.value = 1
         await FallingEdge(dut.clk)
@@ -59,3 +58,22 @@ async def test_random_values(dut):
         assert dut.out.value == data
         dut.in_value.value = 0
         dut.load.value = 0
+
+
+@cocotb.test()
+async def test_latches_on_positive_edge(dut):
+    cocotb.start_soon(Clock(dut.clk, 1, units="ns").start())
+
+    dut.in_value.value = 0
+    dut.load.value = 0
+
+    await FallingEdge(dut.clk)
+    await FallingEdge(dut.clk)
+
+    await RisingEdge(dut.clk)
+    dut.in_value.value = 101
+    dut.load.value = 1
+    await FallingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+    assert dut.out.value == 101
