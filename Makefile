@@ -1,4 +1,4 @@
-CHAPTERS := logic_gates arithmetic memory architecture
+CHAPTERS := logic_gates arithmetic memory architecture assembler
 
 .PHONY: $(CHAPTERS)
 
