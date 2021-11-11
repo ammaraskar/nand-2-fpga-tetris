@@ -2,6 +2,7 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge, RisingEdge, Timer
 from collections import namedtuple
+import random
 
 
 '''Takes a string representing instructions such as:
@@ -74,9 +75,11 @@ async def runs_program_that_maxes_two_numbers(dut):
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
 
+    a = random.randint(-32768, 32767)
+    b = random.randint(32767, 32767)
     # Set up RAM[0] and RAM[1]
-    dut.memory_unit.ram.reg_array[0].value = 3
-    dut.memory_unit.ram.reg_array[1].value = 5
+    dut.memory_unit.ram.reg_array[0].value = a
+    dut.memory_unit.ram.reg_array[1].value = b 
 
     # Reset the CPU.
     dut.reset.value = 1
@@ -90,4 +93,4 @@ async def runs_program_that_maxes_two_numbers(dut):
         await FallingEdge(dut.clk)
         await Timer(time=2, units="ns")
 
-    assert dut.memory_unit.ram.reg_array[2].value.signed_integer == 5
+    assert dut.memory_unit.ram.reg_array[2].value.signed_integer == max(a, b)
