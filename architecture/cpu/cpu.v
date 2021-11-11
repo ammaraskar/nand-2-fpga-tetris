@@ -9,7 +9,7 @@ module cpu(input clk,
            input reset,
            output[15:0] outM,
            output writeM,
-           output[15:0] addressM,
+           output[14:0] addressM,
            output[15:0] newPC);
 
     // Zero out everything initially.
@@ -59,7 +59,7 @@ module cpu(input clk,
     assign reg_d_in_value = alu_output;
 
     // Memory address is always given by A register value.
-    assign addressM = reg_a_value;
+    assign addressM = reg_a_value[14:0];
 
     // Handle the load register bits.
     assign reg_a_load = !instruction[15] || (instruction[15] && instruction[5]);

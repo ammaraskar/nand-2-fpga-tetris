@@ -201,6 +201,7 @@ async def runs_according_to_table(dut):
         else:
             print("-")
             await FallingEdge(dut.clk)
+        # Wait an additional 2ns for the values to stabilize.
         await Timer(time=2, units="ns")
         print("--- Execution Done ---")
 
