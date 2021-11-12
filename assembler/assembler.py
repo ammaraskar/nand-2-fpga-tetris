@@ -1,3 +1,4 @@
+import lark
 from lark import Lark, Transformer
 from lark.exceptions import VisitError
 
@@ -6,11 +7,10 @@ parser = Lark(r"""
 %import common.DIGIT -> DIGIT
 %import common.HEXDIGIT -> HEXDIGIT
 %import common.NEWLINE -> NEWLINE
+%import common.CPP_COMMENT -> COMMENT
 
 %import common.WS
 %ignore WS
-
-COMMENT: /\/\/.*/
 %ignore COMMENT
 
 // A type instructions
@@ -54,9 +54,9 @@ start: [instruction NEWLINE]*
 class ASTValidator(Transformer):
     def validate_number(self, n):
         if n < -(2**14):
-            raise ValueError("Constant is too small (14 bits in immediate)")
+            raise ValueError("Constant is too small (15 bits in immediate)")
         if n > (2**14) - 1:
-            raise ValueError("Constant is too large (14 bits in immediate)")
+            raise ValueError("Constant is too large (15 bits in immediate)")
 
     def decimal_number(self, n):
         (n, ) = n
@@ -107,3 +107,34 @@ def parse_and_validate_ast(assembly):
         # Raise from None so we avoid chaining the real error.
         raise error from None
     return parsed
+
+
+class Assembler(Transformer):
+    # Ignore new lines.
+    def NEWLINE(self, _):
+        raise lark.visitors.Discard()
+
+    # Take the integer value of numbers.
+    def decimal_number(self, items):
+        (n, ) = items
+        return int(n)
+
+    def hex_number(self, items):
+        (n, ) = items
+        return int(n, 16)
+
+    def a_type_instruction(self, items):
+        (constant, ) = items
+        return '0' + format(constant, '015b')
+
+    def instruction(self, items):
+        (instr, ) = items
+        return instr
+
+    def start(self, items):
+        return list(items)
+
+
+def assemble_ast(ast):
+    machine_code = Assembler().transform(ast)
+    return machine_code
