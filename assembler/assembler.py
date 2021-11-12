@@ -1,6 +1,7 @@
 import lark
 from lark import Lark, Transformer
 from lark.exceptions import VisitError
+from dataclasses import dataclass
 
 
 parser = Lark(r"""
@@ -118,6 +119,40 @@ def parse_and_validate_ast(assembly):
     return parsed
 
 
+@dataclass
+class ALUControlBits:
+    zero_x: bool
+    negate_x: bool
+    zero_y: bool
+    negate_y: bool
+    perform_addition: bool
+    negate_output: bool
+
+    @classmethod
+    def make_empty_alu_bits(cls):
+        return cls(zero_x=False, negate_x=False, zero_y=False, negate_y=False, 
+            perform_addition=False, negate_output=False)
+
+    def get_bits(self):
+        """Returns a bitstring of the control bits such as '000010'
+        """
+        bits = [self.zero_x, self.negate_x, self.zero_y, self.negate_y,
+                self.perform_addition, self.negate_output]
+        return ''.join(str(int(x)) for x in bits)
+
+
+@dataclass
+class InstructionC:
+    load_y_from_memory: bool
+    alu_control_bits: ALUControlBits
+
+    def get_bits(self):
+        """Gets bits 12 to 6 for a C-type instruction representing whether to
+        load from memory and the ALU's control bits"""
+        bits = '1' if self.load_y_from_memory else '0'
+        bits += self.alu_control_bits.get_bits()
+        return bits
+
 class Assembler(Transformer):
     # Ignore new lines.
     def NEWLINE(self, _):
@@ -144,6 +179,7 @@ class Assembler(Transformer):
         return list(items)
 
     JUMP_TYPES = {
+        'no_jump': '000',
         'jgt': '001',
         'jeq': '010',
         'jge': '011',
@@ -164,8 +200,50 @@ class Assembler(Transformer):
         load_bits = (load_a, load_d, load_a_star)
         return ''.join(str(int(x)) for x in load_bits)
 
+    def single_register(self, items):
+        (register, ) = items
+
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        # Perform (x & ~0) or (y & ~0) which simplify to
+        # = (x & 0xFFFF), (y & 0xFFFF)
+        # = x, y
+        # respectively to just get the register values out of the ALU.
+        # ALU input x is connected to register D.
+        # ALU input y is connected to register A and memory.
+        control_bits.perform_addition = False
+
+        if register == 'A':
+            instr.load_y_from_memory = False
+            control_bits.zero_x = True
+            control_bits.negate_x = True
+        elif register == '*A':
+            instr.load_y_from_memory = True
+            control_bits.zero_x = True
+            control_bits.negate_x = True
+        else:
+            control_bits.zero_y = True
+            control_bits.negate_y = True
+        
+        return instr
+
     def c_type_instruction(self, items):
-        print(items)
+        if items[0] is not None:
+            assignment = items[0]
+        else:
+            # Assign nothing by default.
+            assignment = '000'
+
+        instr = items[1]
+
+        if items[2] is not None:
+            jump = items[2]
+        else:
+            # Do not perform any jump by default.
+            jump = Assembler.JUMP_TYPES['no_jump']
+
+        return '111' + instr.get_bits() + assignment + jump
 
 
 def assemble_ast(ast):
