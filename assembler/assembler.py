@@ -48,7 +48,7 @@ instruction: a_type_instruction
            | c_type_instruction
 
 start: [instruction NEWLINE]*
-""", propagate_positions=True)
+""", propagate_positions=True, maybe_placeholders=True)
 
 
 class ASTValidator(Transformer):
@@ -73,6 +73,13 @@ class ASTValidator(Transformer):
         if 'A' in (location_a, location_b) and '*A' in (location_a, location_b):
             raise ValueError("Can't use both A and *A in ALU operation")
 
+    def assignment(self, items):
+        used_locations = set()
+        for item in items:
+            if item in used_locations:
+                raise ValueError("Duplicate assignment target, {} already used".format(item))
+            used_locations.add(item)
+
 
 class ValidationError(Exception):
     def __init__(self, message, line, lineno, col_start, col_end):
@@ -83,7 +90,8 @@ class ValidationError(Exception):
         self.col_end = col_end
 
     def __str__(self):
-        message =  '{} at line {} col {}:{}\n'.format(self.message, self.lineno, self.col_start, self.col_end)
+        message =  '{} at line {} col {}:{}\n'.format(
+            self.message, self.lineno, self.col_start, self.col_end)
         message += self.line + '\n'
         message += (' ' * (self.col_start - 1))
         message += ('^' * (self.col_end - self.col_start))
@@ -103,7 +111,8 @@ def parse_and_validate_ast(assembly):
     except VisitError as e:
         # Grab the line the error occured on.
         line = assembly.split('\n')[e.obj.line - 1]
-        error = ValidationError(str(e.orig_exc), line, e.obj.line, e.obj.column, e.obj.end_column)
+        error = ValidationError(
+            str(e.orig_exc), line, e.obj.line, e.obj.column, e.obj.end_column)
         # Raise from None so we avoid chaining the real error.
         raise error from None
     return parsed
@@ -133,6 +142,30 @@ class Assembler(Transformer):
 
     def start(self, items):
         return list(items)
+
+    JUMP_TYPES = {
+        'jgt': '001',
+        'jeq': '010',
+        'jge': '011',
+        'jlt': '100',
+        'jne': '101',
+        'jle': '110',
+        'jmp': '111',
+    }
+
+    def JUMP(self, items):
+        return Assembler.JUMP_TYPES[items]
+
+    def assignment(self, items):
+        load_a = 'A' in items
+        load_d = 'D' in items
+        load_a_star = '*A' in items
+
+        load_bits = (load_a, load_d, load_a_star)
+        return ''.join(str(int(x)) for x in load_bits)
+
+    def c_type_instruction(self, items):
+        print(items)
 
 
 def assemble_ast(ast):

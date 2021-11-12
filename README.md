@@ -21,4 +21,4 @@ sources. `make test` can be used to always run all the tests.
 | 3 | Memory                | [memory/](./memory/)             |
 | 4 | Machine Language      | (No hardware)                    |
 | 5 | Computer Architecture | [architecture/](./architecture/) |
-| 6 | Aseembler             | [assembler/](./assembler/)       |
+| 6 | Assembler             | [assembler/](./assembler/)       |

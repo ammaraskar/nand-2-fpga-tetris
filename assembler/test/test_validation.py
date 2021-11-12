@@ -15,6 +15,17 @@ D; jmp
     assembler.parse_and_validate_ast(assembly)
 
 
+def test_validation_fails_with_duplicate_assignment():
+    assembly = "D, D, A = A"
+
+    with pytest.raises(assembler.ValidationError) as excinfo:
+        assembler.parse_and_validate_ast(assembly)
+
+    assert "Duplicate assignment target, D already used" in str(excinfo.value)
+    assert "D, D, A = A" in str(excinfo.value)
+    assert "^^^^^^^^^" in str(excinfo.value)
+
+
 def test_validation_fails_with_using_a_and_memory():
     assembly = """\
     D = A + *A
