@@ -50,3 +50,17 @@ def test_validation_fails_with_loading_a_that_does_not_fit():
     assert "cannot fit in 15-bit immediate" in str(excinfo.value)
     assert "A := 0xFFFF" in str(excinfo.value)
     assert "     ^^^^^^" in str(excinfo.value)
+
+
+def test_validation_fails_when_instruction_label_is_not_defined():
+    assembly = """\
+    A := 0
+    A := @missing_label
+    """
+
+    with pytest.raises(assembler.ValidationError) as excinfo:
+        assembler.parse_and_validate_ast(assembly)
+
+    assert "Label missing_label used but never defined" in str(excinfo.value)
+    assert "A := @missing_label" in str(excinfo.value)
+    assert "      ^^^^^^^^^^^^^" in str(excinfo.value)

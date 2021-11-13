@@ -132,3 +132,21 @@ def test_c_instruction_subtracting_d_from_a():
 def test_c_instruction_subtracting_d_from_memory():
     ast = assembler.parse_and_validate_ast("A = *A - D")
     assert assembler.assemble_ast(ast) == ['1111000111100000']
+
+def test_basic_label_works():
+    ast = assembler.parse_and_validate_ast("""\
+test_label:
+    A := @test_label
+""")
+    assert assembler.assemble_ast(ast) == ['0000000000000000']
+
+def test_non_predeclared_label_works():
+    ast = assembler.parse_and_validate_ast("""\
+    A := @test_label
+test_label:
+    A := 3
+""")
+    assert assembler.assemble_ast(ast) == [
+        '0000000000000001',
+        '0000000000000011'
+    ]    

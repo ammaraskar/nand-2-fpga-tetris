@@ -10,6 +10,7 @@ parser = Lark(r"""
 %import common.INT -> INT
 %import common.NEWLINE -> NEWLINE
 %import common.CPP_COMMENT -> COMMENT
+%import common.CNAME -> NAME
 
 %import common.WS
 %ignore WS
@@ -21,7 +22,8 @@ number: HEX_NUMBER -> hex_number
       | INT        -> decimal_number
 
 // We use a := here to disambiguate between A=0 etc C-type instructions.
-a_type_instruction: "A" ":=" number
+a_type_instruction: "A" ":=" number     -> a_const
+                  | "A" ":=" ("@" NAME) -> a_label
 
 // C type instructions
 
@@ -48,11 +50,22 @@ c_type_instruction: [assignment] computed_value [";" JUMP]
 instruction: a_type_instruction
            | c_type_instruction
 
-start: [instruction NEWLINE]*
+label: NAME ":"
+
+// Line either has an instruction or a label.
+line: instruction
+    | label
+
+start: [line NEWLINE]*
 """, propagate_positions=True, maybe_placeholders=True)
 
 
 class ASTValidator(Transformer):
+    def __init__(self):
+        # Used to make sure every instruction label used in `A :=` is defined.
+        self.instruction_labels = set()
+        self.used_instruction_labels = []
+
     def validate_number(self, n):
         """Check if the number, as a short can be represented in 14 bits. """
         # Check the length of the binary representation of n.
@@ -84,6 +97,14 @@ class ASTValidator(Transformer):
                 raise ValueError("Duplicate assignment target, {} already used".format(item))
             used_locations.add(item)
 
+    def a_label(self, items):
+        (label, ) = items
+        self.used_instruction_labels.append(label)
+
+    def label(self, items):
+        (label_name, ) = items
+        self.instruction_labels.add(label_name)
+
 
 class ValidationError(Exception):
     def __init__(self, message, line, lineno, col_start, col_end):
@@ -111,7 +132,15 @@ def parse_and_validate_ast(assembly):
     parsed = parser.parse(assembly)
     # Run the validator on it.
     try:
-        ASTValidator().transform(parsed)
+        validator = ASTValidator()
+        validator.transform(parsed)
+
+        # Check for any missing labels.
+        for label in validator.used_instruction_labels:
+            if label in validator.instruction_labels:
+                continue
+            error = ValueError("Label {} used but never defined".format(label))
+            raise VisitError('a_label', label, error)
     except VisitError as e:
         # Grab the line the error occured on.
         line = assembly.split('\n')[e.obj.line - 1]
@@ -156,30 +185,68 @@ class InstructionC:
         bits += self.alu_control_bits.get_bits()
         return bits
 
+
+@dataclass
+class TypeAInstructionPlaceholder:
+    """Used for when we do `A := @symbol` on an unresolved symbol. """
+    label_name: str
+
+
 class Assembler(Transformer):
-    # Ignore new lines.
+    def __init__(self):
+        super().__init__(self)
+        self.instruction_labels = {}
+        self.instruction_index = 0
+
     def NEWLINE(self, _):
+        # Ignore new lines.
         raise lark.visitors.Discard()
 
     # Take the integer value of numbers.
     def decimal_number(self, items):
         (n, ) = items
         return int(n)
-
     def hex_number(self, items):
         (n, ) = items
         return int(n, 16)
 
-    def a_type_instruction(self, items):
-        (constant, ) = items
-        return '0' + format(constant, '015b')
-
     def instruction(self, items):
+        # Increment the instruction index used to keep track of label values.
+        self.instruction_index += 1
         (instr, ) = items
         return instr
 
+    def label(self, items):
+        (label_name, ) = items
+        self.instruction_labels[label_name] = self.instruction_index
+        return None
+
+    def line(self, items):
+        (line, ) = items
+        # Discard because we don't actually want labels in the final transformation.
+        # Instead, label information should be retrieved from
+        # `assembler.instruction_labels`.
+        if line is None:
+            raise lark.visitors.Discard()
+        return line
+
     def start(self, items):
+        # Collect all instructions into a list.
         return list(items)
+
+    def a_const(self, items):
+        (constant, ) = items
+        return '0' + format(constant, '015b')
+
+    def a_label(self, items):
+        (label, ) = items
+        if label in self.instruction_labels:
+            return self.a_const((self.instruction_labels[label], ))
+        return TypeAInstructionPlaceholder(label_name=label)
+
+    def a_type_instruction(self, items):
+        (instr, ) = items
+        return instr
 
     JUMP_TYPES = {
         'no_jump': '000',
@@ -436,5 +503,15 @@ class Assembler(Transformer):
 
 
 def assemble_ast(ast):
-    machine_code = Assembler().transform(ast)
+    assembler = Assembler()
+    machine_code = assembler.transform(ast)
+
+    # Perform a second pass over the list of machine code, substituting in any
+    # undefined instruction labels for their real values.
+    for i, instruction in enumerate(machine_code):
+        if not isinstance(instruction, TypeAInstructionPlaceholder):
+            continue
+        symbol = assembler.instruction_labels[instruction.label_name]
+        machine_code[i] = assembler.a_const((symbol, ))
+
     return machine_code
