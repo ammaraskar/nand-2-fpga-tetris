@@ -27,7 +27,7 @@ a_type_instruction: "A" ":=" number
 
 LOCATION: "A" | "D" | "*A"
 BINARY_OPERATOR: "+" | "-" | "&" | "|"
-UNARY_OPERATOR: "!" | "-"
+UNARY_OPERATOR: "~" | "-"
 
 computed_value: LOCATION                          -> single_register
               | LOCATION BINARY_OPERATOR LOCATION -> register_operation
@@ -276,7 +276,7 @@ class Assembler(Transformer):
 
     def minus_one(self, items):
         # Perform register-1
-        (register, ) = items      
+        (register, ) = items
 
         control_bits = ALUControlBits.make_empty_alu_bits()
         instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
@@ -295,7 +295,7 @@ class Assembler(Transformer):
         else:
             control_bits.zero_y = True
             control_bits.negate_y = True
-        return instr  
+        return instr
 
     def plus_one(self, items):
         # Perform register+1
@@ -310,7 +310,7 @@ class Assembler(Transformer):
         #   = ~(1111111111111101)
         #   =   0000000000000010 = 2
         # This works because in two's complement, negating a number x is the
-        # same as (-x - 1)
+        # same as the value (-x - 1)
         #   x + 1 = ~(~x + 0xFFFF)    <- Express ~x as -x - 1
         #   x + 1 = ~(-x - 1 - 1)     <- Simplify (- 1 - 1)
         #   x + 1 = ~(-x - 2)         <- Express ~(-x - 2) as -(-x - 2) - 1
@@ -331,6 +331,41 @@ class Assembler(Transformer):
             control_bits.zero_x = True
         else:
             control_bits.zero_y = True
+
+        return instr
+
+    def single_register_operation(self, items):
+        # Compute ~register or -register.
+        # ~register is just done with ~(x & 0xFFFF) = ~x
+        #
+        # -register is computed with ~(x - 1)
+        # This once again rlies on the fact that in two's complement negating
+        # x is the same as (-x - 1)
+        #   -x = ~(x - 1)
+        #   -x = -(x - 1) - 1
+        #   -x = -x + 1 - 1
+        #   -x = -x
+        (operator, register, ) = items
+        print(operator, register)
+
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        control_bits.negate_output = True
+        if operator == '-':
+            control_bits.perform_addition = True
+        else:
+            control_bits.perform_addition = False
+
+        if register == '*A':
+            instr.load_y_from_memory = True
+
+        if register == 'A' or register == '*A':
+            control_bits.zero_x = True
+            control_bits.negate_x = True
+        else:
+            control_bits.zero_y = True
+            control_bits.negate_y = True
 
         return instr
 

@@ -57,3 +57,26 @@ def test_c_instruction_with_d_minus_one():
     ast = assembler.parse_and_validate_ast("D = D - 1")
     assert assembler.assemble_ast(ast) == ['1110001110010000']
 
+def test_c_instruction_with_unary_bitwise_negation_a():
+    ast = assembler.parse_and_validate_ast("A = ~A")
+    assert assembler.assemble_ast(ast) == ['1110110001100000']
+
+def test_c_instruction_with_unary_bitwise_negation_memory():
+    ast = assembler.parse_and_validate_ast("*A = ~ *A")
+    assert assembler.assemble_ast(ast) == ['1111110001001000']
+
+def test_c_instruction_with_unary_bitwise_negation_d():
+    ast = assembler.parse_and_validate_ast("D = ~D")
+    assert assembler.assemble_ast(ast) == ['1110001101010000']
+
+def test_c_instruction_with_unary_negative_a():
+    ast = assembler.parse_and_validate_ast("A = -A")
+    assert assembler.assemble_ast(ast) == ['1110110011100000']
+
+def test_c_instruction_with_unary_negative_memory():
+    ast = assembler.parse_and_validate_ast("*A = -*A")
+    assert assembler.assemble_ast(ast) == ['1111110011001000']
+
+def test_c_instruction_with_unary_negative_d():
+    ast = assembler.parse_and_validate_ast("D = -D")
+    assert assembler.assemble_ast(ast) == ['1110001111010000']
