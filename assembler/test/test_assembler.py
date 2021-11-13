@@ -149,4 +149,20 @@ test_label:
     assert assembler.assemble_ast(ast) == [
         '0000000000000001',
         '0000000000000011'
+    ]
+
+def test_can_use_predefined_symbol():
+    ast = assembler.parse_and_validate_ast("A := $R1")
+    assert assembler.assemble_ast(ast) == ['0000000000000001']
+
+def test_can_define_your_own_symbols():
+    ast = assembler.parse_and_validate_ast("""\
+    A := $my_var
+    A := 0
+    A := $my_other_var
+""")
+    assert assembler.assemble_ast(ast) == [
+        '0000000000010000',
+        '0000000000000000',
+        '0000000000010001'
     ]    

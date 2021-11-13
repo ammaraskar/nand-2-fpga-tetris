@@ -24,6 +24,7 @@ number: HEX_NUMBER -> hex_number
 // We use a := here to disambiguate between A=0 etc C-type instructions.
 a_type_instruction: "A" ":=" number     -> a_const
                   | "A" ":=" ("@" NAME) -> a_label
+                  | "A" ":=" ("$" NAME) -> a_symbol
 
 // C type instructions
 
@@ -192,11 +193,22 @@ class TypeAInstructionPlaceholder:
     label_name: str
 
 
+DEFAULT_SYMBOLS = {
+    'SP': 0, 'LCL': 1, 'ARG': 2, 'THIS': 3, 'THAT': 4,
+    'R0': 0, 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5, 'R6': 6, 'R7': 7,
+    'R8': 8, 'R9': 9, 'R10': 10, 'R11': 11, 'R12': 12, 'R13': 13, 'R14': 14,
+    'R15': 15, 'SCREEN': 0x4000, 'KBD': 0x6000
+}
+
+
 class Assembler(Transformer):
     def __init__(self):
         super().__init__(self)
         self.instruction_labels = {}
         self.instruction_index = 0
+
+        self.symbol_map = DEFAULT_SYMBOLS.copy()
+        self.next_symbol_address = 16
 
     def NEWLINE(self, _):
         # Ignore new lines.
@@ -243,6 +255,16 @@ class Assembler(Transformer):
         if label in self.instruction_labels:
             return self.a_const((self.instruction_labels[label], ))
         return TypeAInstructionPlaceholder(label_name=label)
+
+    def a_symbol(self, items):
+        (symbol_name, ) = items
+        if symbol_name in self.symbol_map:
+            symbol_address = self.symbol_map[symbol_name]
+        else:
+            symbol_address = self.next_symbol_address
+            self.symbol_map[symbol_name] = symbol_address
+            self.next_symbol_address += 1
+        return self.a_const((symbol_address, ))
 
     def a_type_instruction(self, items):
         (instr, ) = items
