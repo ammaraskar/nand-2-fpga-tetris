@@ -346,7 +346,6 @@ class Assembler(Transformer):
         #   -x = -x + 1 - 1
         #   -x = -x
         (operator, register, ) = items
-        print(operator, register)
 
         control_bits = ALUControlBits.make_empty_alu_bits()
         instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
@@ -366,6 +365,54 @@ class Assembler(Transformer):
         else:
             control_bits.zero_y = True
             control_bits.negate_y = True
+
+        return instr
+
+    def register_operation(self, items):
+        # Handles operations between two different registers.
+        (reg1, operator, reg2) = items
+
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        # Make sure it's reg2 that is register A or *A consistently for operators
+        # that are commutative. 
+        if operator != '-' and (reg1 == 'A' or reg1 == '*A'):
+            reg1, reg2 = reg2, reg1
+
+        # Set the memory load bit depending on whether we're using *A
+        if '*A' in (reg1, reg2):
+            instr.load_y_from_memory = True
+
+        if operator == '+':
+            # We use the adder circuit for +
+            control_bits.perform_addition = True
+        elif operator == '-':
+            # Subtraction is implemented in a little funny way.using again, the
+            # property that negation of x in two's complement is (-x - 1):
+            #   y - x = ~(x + ~y)
+            #         = ~(x - y - 1)
+            #         = -(x - y - 1) - 1
+            #         = -x + y + 1 - 1
+            #         = y - x
+            control_bits.perform_addition = True
+            control_bits.negate_output = True
+            # Here order actually matters.
+            a_on_left = (reg1 == 'A' or reg1 == '*A')
+            if a_on_left:
+                control_bits.negate_y = True
+            else:
+                control_bits.negate_x = True
+        elif operator == '&':
+            # Simply use the AND circuit in the ALU.
+            control_bits.perform_addition = False
+        elif operator == '|':
+            # We implement or using De Morgan's law
+            # (x or y) = not(not x and not y)
+            control_bits.negate_x = True
+            control_bits.negate_y = True
+            control_bits.perform_addition = False
+            control_bits.negate_output = True
 
         return instr
 

@@ -80,3 +80,55 @@ def test_c_instruction_with_unary_negative_memory():
 def test_c_instruction_with_unary_negative_d():
     ast = assembler.parse_and_validate_ast("D = -D")
     assert assembler.assemble_ast(ast) == ['1110001111010000']
+
+def test_c_instruction_with_AND_operation():
+    ast = assembler.parse_and_validate_ast("A = A & D")
+    assert assembler.assemble_ast(ast) == ['1110000000100000']
+    ast = assembler.parse_and_validate_ast("A = D & A")
+    assert assembler.assemble_ast(ast) == ['1110000000100000']
+
+def test_c_instruction_with_AND_operation_and_memory():
+    ast = assembler.parse_and_validate_ast("A = *A & D")
+    assert assembler.assemble_ast(ast) == ['1111000000100000']
+    ast = assembler.parse_and_validate_ast("A = D & *A")
+    assert assembler.assemble_ast(ast) == ['1111000000100000']
+
+def test_c_instruction_with_OR_operation():
+    ast = assembler.parse_and_validate_ast("A = A | D")
+    assert assembler.assemble_ast(ast) == ['1110010101100000']
+    ast = assembler.parse_and_validate_ast("A = D | A")
+    assert assembler.assemble_ast(ast) == ['1110010101100000']
+
+def test_c_instruction_with_OR_operation_and_memory():
+    ast = assembler.parse_and_validate_ast("A = *A | D")
+    assert assembler.assemble_ast(ast) == ['1111010101100000']
+    ast = assembler.parse_and_validate_ast("A = D | *A")
+    assert assembler.assemble_ast(ast) == ['1111010101100000']
+
+def test_c_instruction_with_plus_operation():
+    ast = assembler.parse_and_validate_ast("A = A + D")
+    assert assembler.assemble_ast(ast) == ['1110000010100000']
+    ast = assembler.parse_and_validate_ast("A = D + A")
+    assert assembler.assemble_ast(ast) == ['1110000010100000']
+
+def test_c_instruction_with_plus_operation_and_memory():
+    ast = assembler.parse_and_validate_ast("A = *A + D")
+    assert assembler.assemble_ast(ast) == ['1111000010100000']
+    ast = assembler.parse_and_validate_ast("A = D + *A")
+    assert assembler.assemble_ast(ast) == ['1111000010100000']
+
+def test_c_instruction_subtracting_a_from_d():
+    ast = assembler.parse_and_validate_ast("A = D - A")
+    assert assembler.assemble_ast(ast) == ['1110010011100000']
+
+def test_c_instruction_subtracting_memory_from_d():
+    ast = assembler.parse_and_validate_ast("A = D - *A")
+    assert assembler.assemble_ast(ast) == ['1111010011100000']
+
+def test_c_instruction_subtracting_d_from_a():
+    ast = assembler.parse_and_validate_ast("A = A - D")
+    assert assembler.assemble_ast(ast) == ['1110000111100000']
+
+def test_c_instruction_subtracting_d_from_memory():
+    ast = assembler.parse_and_validate_ast("A = *A - D")
+    assert assembler.assemble_ast(ast) == ['1111000111100000']
