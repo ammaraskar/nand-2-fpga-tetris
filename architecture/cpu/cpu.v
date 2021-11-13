@@ -72,7 +72,10 @@ module cpu(input clk,
 
     // Register-A input is either taken as an immediate from the instruction
     // or the output of the ALU.
-    assign reg_a_in_value = instruction[15] ? alu_output : instruction[14:0];
+    reg[15:0] instruction_immediate;
+    assign instruction_immediate[15] = 0;
+    assign instruction_immediate[14:0] = instruction[14:0];
+    assign reg_a_in_value = instruction[15] ? alu_output : instruction_immediate;
 
     always @(posedge(clk)) begin
         // Set PC to increment by default.

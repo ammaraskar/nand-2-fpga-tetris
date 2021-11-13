@@ -7,6 +7,7 @@ from dataclasses import dataclass
 parser = Lark(r"""
 %import common.DIGIT -> DIGIT
 %import common.HEXDIGIT -> HEXDIGIT
+%import common.INT -> INT
 %import common.NEWLINE -> NEWLINE
 %import common.CPP_COMMENT -> COMMENT
 
@@ -15,13 +16,12 @@ parser = Lark(r"""
 %ignore COMMENT
 
 // A type instructions
-
-DEC_NUMBER: DIGIT+
 HEX_NUMBER: "0" "x" HEXDIGIT+
-number: DEC_NUMBER  -> decimal_number
-      | HEX_NUMBER  -> hex_number
+number: HEX_NUMBER -> hex_number
+      | INT        -> decimal_number
 
-a_type_instruction: "A" "=" number
+// We use a := here to disambiguate between A=0 etc C-type instructions.
+a_type_instruction: "A" ":=" number
 
 // C type instructions
 
@@ -54,10 +54,13 @@ start: [instruction NEWLINE]*
 
 class ASTValidator(Transformer):
     def validate_number(self, n):
-        if n < -(2**14):
-            raise ValueError("Constant is too small (15 bits in immediate)")
-        if n > (2**14) - 1:
-            raise ValueError("Constant is too large (15 bits in immediate)")
+        """Check if the number, as a short can be represented in 14 bits. """
+        # Check the length of the binary representation of n.
+        bitstring = bin(n)[2:]
+
+        if len(bitstring) > 15:
+            raise ValueError(
+                "Constant ({}) cannot fit in 15-bit immediate".format(bitstring))
 
     def decimal_number(self, n):
         (n, ) = n
@@ -130,7 +133,7 @@ class ALUControlBits:
 
     @classmethod
     def make_empty_alu_bits(cls):
-        return cls(zero_x=False, negate_x=False, zero_y=False, negate_y=False, 
+        return cls(zero_x=False, negate_x=False, zero_y=False, negate_y=False,
             perform_addition=False, negate_output=False)
 
     def get_bits(self):
@@ -225,8 +228,38 @@ class Assembler(Transformer):
         else:
             control_bits.zero_y = True
             control_bits.negate_y = True
-        
+
         return instr
+
+    def zero_const(self, _):
+        # Generate a zero out of the ALU by zero-ing out both inputs and
+        # performing a x+y. (x & y could also be used here but this is what
+        # the book uses so...)
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        control_bits.zero_x = True
+        control_bits.zero_y = True
+        control_bits.perform_addition = True
+
+        return instr
+
+    def one_const(self, _):
+        # Generate a one out of the ALU in a rather fun way. We load in
+        # 0xFFFF and 0xFFFF (all ones) into both ALU inputs. Now if we add
+        # these we get 0xFFFE (1111...1110, all ones except the last bit).
+        # Now, performing the negation of this gives us a 1 :)
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        control_bits.zero_x = True
+        control_bits.negate_x = True
+        control_bits.zero_y = True
+        control_bits.negate_y = True
+        control_bits.perform_addition = True
+        control_bits.negate_output = True
+
+        return instr        
 
     def c_type_instruction(self, items):
         if items[0] is not None:

@@ -5,7 +5,7 @@ import pytest
 def test_parses_a_basic_set_of_instruction():
     assembly = """\
 // Load 123 into A
-A = 123
+A := 123
 // Copy to D
 D = A
 // Load memory, d and A with (A + 1)
@@ -41,12 +41,12 @@ def test_validation_fails_with_using_a_and_memory():
 
 def test_validation_fails_with_loading_a_that_does_not_fit():
     assembly = """\
-    A = 0xFFFF
+    A := 0xFFFF
     """
 
     with pytest.raises(assembler.ValidationError) as excinfo:
         assembler.parse_and_validate_ast(assembly)
 
-    assert "Constant is too large (15 bits in immediate)" in str(excinfo.value)
-    assert "A = 0xFFFF" in str(excinfo.value)
-    assert "    ^^^^^^" in str(excinfo.value)
+    assert "cannot fit in 15-bit immediate" in str(excinfo.value)
+    assert "A := 0xFFFF" in str(excinfo.value)
+    assert "     ^^^^^^" in str(excinfo.value)
