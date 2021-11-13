@@ -259,7 +259,80 @@ class Assembler(Transformer):
         control_bits.perform_addition = True
         control_bits.negate_output = True
 
-        return instr        
+        return instr
+
+    def minus_one_const(self, _):
+        # Generating a minus one is pretty easy. Just set one ALU inputs to
+        # 0xFFFF, the other to 0 and then add them together.
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        control_bits.zero_x = True
+        control_bits.negate_x = True
+        control_bits.zero_y = True
+        control_bits.perform_addition = True
+
+        return instr
+
+    def minus_one(self, items):
+        # Perform register-1
+        (register, ) = items      
+
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+
+        # Subtracting 1 is simple, add -1 (0xFFFF in two's complement) to the
+        # desired register.
+        control_bits.perform_addition = True
+        if register == 'A':
+            instr.load_y_from_memory = False
+            control_bits.zero_x = True
+            control_bits.negate_x = True
+        elif register == '*A':
+            instr.load_y_from_memory = True
+            control_bits.zero_x = True
+            control_bits.negate_x = True
+        else:
+            control_bits.zero_y = True
+            control_bits.negate_y = True
+        return instr  
+
+    def plus_one(self, items):
+        # Perform register+1
+        (register, ) = items
+
+        control_bits = ALUControlBits.make_empty_alu_bits()
+        instr = InstructionC(load_y_from_memory=False, alu_control_bits=control_bits)
+        # We do this by taking the input register, negating it, adding -1/0xFFFF
+        # and then negating the output. For example where x = 1:
+        #   = ~(1111111111111110 + 1111111111111111)
+        #   = ~(1111111111111110 + 1111111111111111)
+        #   = ~(1111111111111101)
+        #   =   0000000000000010 = 2
+        # This works because in two's complement, negating a number x is the
+        # same as (-x - 1)
+        #   x + 1 = ~(~x + 0xFFFF)    <- Express ~x as -x - 1
+        #   x + 1 = ~(-x - 1 - 1)     <- Simplify (- 1 - 1)
+        #   x + 1 = ~(-x - 2)         <- Express ~(-x - 2) as -(-x - 2) - 1
+        #   x + 1 = -(-x - 2) - 1
+        #   x + 1 = x + 2 - 1
+        #   x + 1 = x + 1
+        control_bits.negate_output = True
+        control_bits.perform_addition = True
+
+        control_bits.negate_x = True
+        control_bits.negate_y = True
+
+        if register == 'A':
+            instr.load_y_from_memory = False
+            control_bits.zero_x = True
+        elif register == '*A':
+            instr.load_y_from_memory = True
+            control_bits.zero_x = True
+        else:
+            control_bits.zero_y = True
+
+        return instr
 
     def c_type_instruction(self, items):
         if items[0] is not None:
@@ -268,6 +341,7 @@ class Assembler(Transformer):
             # Assign nothing by default.
             assignment = '000'
 
+        # Memory input and ALU bits given by middle part.
         instr = items[1]
 
         if items[2] is not None:
