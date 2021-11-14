@@ -15,32 +15,30 @@ module cpu(input clk,
     // Zero out everything initially.
 
 
-    reg[15:0] pc_value;
-    reg[15:0] pc_in;
+    wire[15:0] pc_value;
+    wire[15:0] pc_in;
     reg pc_load;
     reg pc_increment;
     program_counter pc(pc_value, clk, pc_in, pc_load, reset, pc_increment);
 
     assign newPC = pc_value;
 
-    reg[15:0] reg_a_value;
-    reg[15:0] reg_a_in_value;
-    reg reg_a_load;
+    wire[15:0] reg_a_value;
+    wire[15:0] reg_a_in_value;
+    wire reg_a_load;
     register register_a(reg_a_value, clk, reg_a_in_value, reg_a_load);
 
-    reg[15:0] reg_d_value;
-    reg[15:0] reg_d_in_value;
-    reg reg_d_load;
+    wire[15:0] reg_d_value;
+    wire[15:0] reg_d_in_value;
+    wire reg_d_load;
     register register_d(reg_d_value, clk, reg_d_in_value, reg_d_load);
 
-    reg[15:0] alu_output;
-    reg zr_status; reg ng_status;
-    reg[15:0] alu_x;
+    wire[15:0] alu_output;
+    wire zr_status, ng_status;
+    wire[15:0] alu_x;
     reg[15:0] alu_y;
-    reg zx_alu; reg nx_alu;
-    reg zy_alu; reg ny_alu;
-    reg f_alu;
-    reg no_alu;
+    wire zx_alu, nx_alu, zy_alu, ny_alu;
+    wire f_alu, no_alu;
     alu alu_unit(alu_output, zr_status, ng_status, alu_x, alu_y,
                  zx_alu, nx_alu, zy_alu, ny_alu, f_alu, no_alu);
 
@@ -72,7 +70,7 @@ module cpu(input clk,
 
     // Register-A input is either taken as an immediate from the instruction
     // or the output of the ALU.
-    reg[15:0] instruction_immediate;
+    wire[15:0] instruction_immediate;
     assign instruction_immediate[15] = 0;
     assign instruction_immediate[14:0] = instruction[14:0];
     assign reg_a_in_value = instruction[15] ? alu_output : instruction_immediate;
