@@ -22,3 +22,31 @@ sources. `make test` can be used to always run all the tests.
 | 4 | Machine Language      | (No hardware)                    |
 | 5 | Computer Architecture | [architecture/](./architecture/) |
 | 6 | Assembler             | [assembler/](./assembler/)       |
+
+## Demo
+
+Here is an assembly program running on an [Elbert V2](https://numato.com/product/elbert-v2-spartan-3a-fpga-development-board/)
+dev board with a [Xilinx Spartan 3A](https://www.xilinx.com/products/silicon-devices/fpga/xa-spartan-3a.html) FPGA.
+
+The 7-segment display is hooked up the to the D-register, and the CPU is clocked
+at 12 Hz.
+
+![Counter Program Demo](images/counter.gif)
+
+Source Code:
+
+```asm
+start:
+   // Initialize D to 9
+   A := 9
+   D = A
+loop:
+   D = D - 1
+   A := @loop
+   // If D is not zero, jump back up to loop
+   D; jne
+
+   // Jump back to start.
+   A := @start
+   0; jmp
+```

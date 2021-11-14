@@ -2,6 +2,8 @@ import lark
 from lark import Lark, Transformer
 from lark.exceptions import VisitError
 from dataclasses import dataclass
+import sys
+from pathlib import Path
 
 
 parser = Lark(r"""
@@ -537,3 +539,27 @@ def assemble_ast(ast):
         machine_code[i] = assembler.a_const((symbol, ))
 
     return machine_code
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: assembler <file.asm>")
+        sys.exit(1)
+
+    source_file = Path(sys.argv[1])
+    if not source_file.exists():
+        print("Source file {} not found".format(source_file))
+        sys.exit(1)
+
+    assembled_file = source_file.with_suffix('.hack')
+
+    with source_file.open() as f:
+        source = f.read()
+
+    ast = parse_and_validate_ast(source)
+    assembled = assemble_ast(ast)
+
+    with assembled_file.open('w') as f:
+        for bitstring in assembled:
+            f.write(bitstring)
+            f.write("\n")
