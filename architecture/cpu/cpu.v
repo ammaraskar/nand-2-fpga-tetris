@@ -56,8 +56,11 @@ module cpu(input clk,
     // Make D-register take input from the ALU.
     assign reg_d_in_value = alu_output;
 
-    // Memory address is always given by A register value.
-    assign addressM = reg_a_value[14:0];
+    // Memory address is always given by A register value. However, in our case
+    // memory loads are 1-cycle delayed. In order to cope with this and still
+    // handle dereferencing memory immediately after loading a value into the
+    // A-register, we take the incoming value into the register as the address.
+    assign addressM = instruction[15] ? reg_a_value[14:0] : reg_a_in_value[14:0];
 
     // Handle the load register bits.
     assign reg_a_load = !instruction[15] || (instruction[15] && instruction[5]);
