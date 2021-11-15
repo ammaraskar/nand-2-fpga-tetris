@@ -12,7 +12,12 @@ module computer(input clk, input reset);
     wire memory_load;
     // The address to write `memory_in` to if `memory_load` is true.
     wire[14:0] memory_address;
-    memory memory_unit(memory_out, clk, memory_in, memory_load, memory_address);
+    memory memory_unit(
+        .out(memory_out), .clk(clk),
+        .in_value(memory_in), .load(memory_load), .address(memory_address)
+        // The other ports stay disconnected, they're hardware dependent for the
+        // dual ported memory.
+    );
 
     reg[15:0] instructions[4095:0];
     wire[15:0] nextPC;
@@ -21,6 +26,6 @@ module computer(input clk, input reset);
         instruction <= instructions[nextPC];
     end
 
-    cpu cpu_unit(clk, memory_out, instruction, reset, 
+    cpu cpu_unit(clk, memory_out, instruction, reset,
                  memory_in, memory_load, memory_address, nextPC);
 endmodule

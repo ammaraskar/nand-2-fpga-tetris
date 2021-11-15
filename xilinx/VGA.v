@@ -1,9 +1,8 @@
 `include "VGAClock.v"
 
-module VGA(input clk,
+module VGA(input clk, input[15:0] bitmap_mem, output[10:0] bitmap_addr, output clk_vga,
            output HSyncOut, output VSyncOut,
            output[1:0] Blue, output[2:0] Red, output[2:0] Green);
-    wire clk_vga;
     VGAClock vga_clock(clk, reset, clk_vga);
 
     // constant declarations for VGA sync parameters
