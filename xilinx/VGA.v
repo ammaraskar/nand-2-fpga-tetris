@@ -29,6 +29,11 @@ module VGA(input clk, input[15:0] bitmap_mem, output[10:0] bitmap_addr, output c
     assign VSyncOut = !(vcount >= START_V_RETRACE && vcount <= END_V_RETRACE);
     assign HSyncOut = !(hcount >= START_H_RETRACE && hcount <= END_H_RETRACE);
 
+    // In memory we have a 160*120 pixel bitmap starting at address 0x200.
+    assign bitmap_addr = 512 + ((hcount / 4) / 16) + ((vcount / 4) * (160 / 16));
+    wire[3:0] bitmap_bit_idx;
+    assign bitmap_bit_idx = (hcount / 4) % 16;
+
     reg[1:0] blue_reg;
     reg[2:0] red_reg;
     reg[2:0] green_reg;
@@ -46,11 +51,7 @@ module VGA(input clk, input[15:0] bitmap_mem, output[10:0] bitmap_addr, output c
             hcount <= hcount + 1;
         end
 
-        if (hcount >= 20 && hcount <= 100) begin
-            blue_reg <= 2'b11;
-            red_reg <= 3'b000;
-            green_reg <= 3'b000;
-        end else if (hcount < H_DISPLAY && vcount < V_DISPLAY) begin
+        if (hcount < H_DISPLAY && vcount < V_DISPLAY && bitmap_mem[bitmap_bit_idx]) begin
             blue_reg <= 2'b11;
             red_reg <= 3'b111;
             green_reg <= 3'b111;
