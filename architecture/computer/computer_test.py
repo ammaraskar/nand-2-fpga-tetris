@@ -125,6 +125,35 @@ async def can_deref_memory_into_register_a(dut):
     assert dut.memory_unit.ram.reg_array[3].value.signed_integer == 42
 
 @cocotb.test()
+async def can_increment_a_memory_address(dut):
+    # Performs *(69) = *69 - 1;
+    get_instructions(dut.instructions, '''\
+0000000001000101  @69
+1111110010001000  M = M - 1
+0000000000000011  @INFINITE_LOOP (INFINITE_LOOP)
+1110101010000111  0; jmp
+''')
+    # Address to write 42 to
+    dut.memory_unit.ram.reg_array[69].value = 8
+
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    # Reset the CPU.
+    dut.reset.value = 1
+    await FallingEdge(dut.clk)
+    await FallingEdge(dut.clk)
+    dut.reset.value = 0
+
+    print("[SIMULATOR] Reseted")
+
+    for i in range(9):
+        await FallingEdge(dut.clk)
+        await Timer(time=2, units="ns")
+        #print("[SIMULATOR] State: instr={}, A={}, D={}, newPC={}, inM={}, addressM={}, outM={}, writeM={}".format(dut.cpu_unit.instruction.value, dut.cpu_unit.reg_a_value.value, dut.cpu_unit.reg_d_value.value, dut.cpu_unit.newPC.value.integer, dut.cpu_unit.inM.value, dut.cpu_unit.addressM.value.integer, dut.cpu_unit.outM.value, dut.cpu_unit.writeM.value.integer))
+        #print("            State: x={} y={} out={} zx={} nx={} zy={} ny={} f={} no={}".format(dut.cpu_unit.alu_x, dut.cpu_unit.alu_y, dut.cpu_unit.alu_output, dut.cpu_unit.zx_alu, dut.cpu_unit.nx_alu, dut.cpu_unit.zy_alu, dut.cpu_unit.ny_alu, dut.cpu_unit.f_alu, dut.cpu_unit.no_alu))
+
+    assert dut.memory_unit.ram.reg_array[69].value.signed_integer == 7
+
+@cocotb.test()
 async def runs_rect_program(dut):
     get_instructions(dut.instructions, '''\
 0000000000000000  @0

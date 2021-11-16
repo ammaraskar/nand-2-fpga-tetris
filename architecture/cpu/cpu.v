@@ -78,18 +78,14 @@ module cpu(input clk,
     assign instruction_immediate[14:0] = instruction[14:0];
     assign reg_a_in_value = instruction[15] ? alu_output : instruction_immediate;
 
+    // Choose between memory value or A-register value depending on
+    // bit 12 in the instruction.
+    assign alu_y = instruction[12] ? inM : reg_a_value;
+
     always @(posedge(clk)) begin
         // Set PC to increment by default.
         pc_load <= 0;
         pc_increment <= 1;
-
-        // Choose between memory value or A-register value depending on
-        // bit 12 in the instruction.
-        if (instruction[12] == 0) begin
-            alu_y <= reg_a_value;
-        end else begin
-            alu_y <= inM;
-        end
 
         // Check whether we are going jump or not.
         case (instruction[2:0])
