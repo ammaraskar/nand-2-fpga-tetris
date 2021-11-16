@@ -36,7 +36,7 @@ module cpu(input clk,
     wire[15:0] alu_output;
     wire zr_status, ng_status;
     wire[15:0] alu_x;
-    reg[15:0] alu_y;
+    wire[15:0] alu_y;
     wire zx_alu, nx_alu, zy_alu, ny_alu;
     wire f_alu, no_alu;
     alu alu_unit(alu_output, zr_status, ng_status, alu_x, alu_y,
